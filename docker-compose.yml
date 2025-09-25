@@ -5,6 +5,7 @@ services:
     environment:
       POSTGRES_PASSWORD: temporal
       POSTGRES_USER: temporal
+      POSTGRES_DB: temporal
     image: postgres:${POSTGRESQL_VERSION}
     networks:
       - temporal-network
@@ -12,6 +13,11 @@ services:
       - 5432:5432
     volumes:
       - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal -d temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   flyway:
     container_name: flyway
@@ -19,7 +25,8 @@ services:
     networks:
       - temporal-network
     depends_on:
-      - postgresql
+      postgresql:
+        condition: service_healthy
     command: -url=jdbc:postgresql://postgresql:5432/temporal -user=temporal -password=temporal -locations=filesystem:/ddl -baselineOnMigrate=true migrate
     volumes:
       - ./ddl:/ddl
@@ -28,7 +35,8 @@ services:
   temporal:
     container_name: temporal
     depends_on:
-      - flyway
+      flyway:
+        condition: service_completed_successfully
     environment:
       - DB=postgres12
       - DB_PORT=5432
@@ -46,31 +54,31 @@ services:
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
-  temporal-admin-tools:
-    container_name: temporal-admin-tools
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-    image: temporalio/admin-tools:${TEMPORAL_ADMINTOOLS_VERSION}
-    networks:
-      - temporal-network
-    stdin_open: true
-    tty: true
-
-  temporal-ui:
-    container_name: temporal-ui
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    image: temporalio/ui:${TEMPORAL_UI_VERSION}
-    networks:
-      - temporal-network
-    ports:
-      - 8080:8080
+#  temporal-admin-tools:
+#    container_name: temporal-admin-tools
+#    depends_on:
+#      - temporal
+#    environment:
+#      - TEMPORAL_ADDRESS=temporal:7233
+#      - TEMPORAL_CLI_ADDRESS=temporal:7233
+#    image: temporalio/admin-tools:${TEMPORAL_ADMINTOOLS_VERSION}
+#    networks:
+#      - temporal-network
+#    stdin_open: true
+#    tty: true
+#
+#  temporal-ui:
+#    container_name: temporal-ui
+#    depends_on:
+#      - temporal
+#    environment:
+#      - TEMPORAL_ADDRESS=temporal:7233
+#      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+#    image: temporalio/ui:${TEMPORAL_UI_VERSION}
+#    networks:
+#      - temporal-network
+#    ports:
+#      - 8080:8080
 networks:
   temporal-network:
     driver: bridge
