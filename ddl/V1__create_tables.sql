@@ -42,6 +42,6 @@ GRANT USAGE ON SCHEMA public TO syndyk_reader;
 GRANT SELECT ON x_offers TO syndyk_reader;
 GRANT SELECT ON x_property TO syndyk_reader;
 GRANT SELECT ON x_property_offer TO syndyk_reader;
-
+ALTER ROLE syndyk_reader WITH REPLICATION;
 -- Ensure read-only user can see sequences (needed if default values use them)
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO syndyk_reader;
