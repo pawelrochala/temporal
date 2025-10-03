@@ -87,7 +87,7 @@ CREATE TRIGGER trg_x_property_history
 DO $$
 BEGIN
    IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'syndyk_pub') THEN
-      CREATE PUBLICATION syndyk_pub FOR TABLE x_offers, x_property, x_property_offer;
+      CREATE PUBLICATION syndyk_pub FOR TABLE x_offers, x_property, x_property_offer, x_property_history;
    END IF;
 END
 $$;
@@ -109,6 +109,9 @@ GRANT USAGE ON SCHEMA public TO syndyk_reader;
 GRANT SELECT ON x_offers TO syndyk_reader;
 GRANT SELECT ON x_property TO syndyk_reader;
 GRANT SELECT ON x_property_offer TO syndyk_reader;
+GRANT SELECT ON x_property_history TO syndyk_reader;
+
+
 
 -- Give replication privilege (safe if already set)
 ALTER ROLE syndyk_reader WITH REPLICATION;
